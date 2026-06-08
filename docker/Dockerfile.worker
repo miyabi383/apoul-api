@@ -8,10 +8,11 @@ COPY apps/api apps/api
 COPY apps/worker apps/worker
 COPY packages packages
 
-RUN pnpm install --frozen-lockfile && pnpm db:generate
+RUN pnpm install --frozen-lockfile --prod=false && pnpm db:generate
 
 ENV NODE_ENV=production
 ENV WORKER_POLL_MS=2000
 ENV WORKER_HEALTH_PORT=4200
 
-CMD ["pnpm", "exec", "tsx", "apps/worker/src/main.ts"]
+WORKDIR /app/apps/worker
+CMD ["sh", "-c", "cd /app && pnpm db:generate && exec ./node_modules/.bin/tsx src/main.ts"]
