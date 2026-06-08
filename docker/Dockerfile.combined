@@ -21,4 +21,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 
 EXPOSE 4100
 
-CMD ["sh", "scripts/start-prod-combined.sh"]
+CMD ["sh", "-c", "pnpm db:deploy && pnpm exec tsx apps/api/src/main.ts & pnpm exec tsx apps/worker/src/main.ts & wait"]
