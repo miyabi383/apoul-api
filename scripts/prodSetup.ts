@@ -13,7 +13,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  */
 async function main() {
   execSync("pnpm db:deploy", { cwd: ROOT, stdio: "inherit", env: process.env });
-  const token = syncDevToken();
+  const token = syncDevToken({ writeFiles: !process.env.RENDER });
 
   console.log("\n=== 本番初回セットアップ完了 ===\n");
   console.log("Vercel（管理画面）に以下を設定:");

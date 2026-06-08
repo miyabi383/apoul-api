@@ -43,18 +43,24 @@ function upsertEnvVar(filePath: string, key: string, value: string) {
   writeFileSync(filePath, `${updated.join("\n").replace(/\n+$/, "")}\n`, "utf8");
 }
 
-export function syncDevToken(options: { seed?: boolean } = {}): string {
+export function syncDevToken(options: { seed?: boolean; writeFiles?: boolean } = {}): string {
+  const writeFiles = options.writeFiles !== false;
+
   if (options.seed !== false) {
     execSync("pnpm seed", { cwd: ROOT, stdio: "inherit", env: process.env });
   }
 
-  const token = execSync("pnpm exec tsx --env-file=../../.env ./prisma/e2eIssueKey.ts", {
+  const envFile = existsSync(resolve(ROOT, ".env")) ? "--env-file=../../.env" : "";
+  const token = execSync(`pnpm exec tsx ${envFile} ./prisma/e2eIssueKey.ts`.trim(), {
     cwd: DB,
     encoding: "utf8",
     env: process.env,
   }).trim();
 
   process.env.APOUL_SERVICE_TOKEN = token;
+
+  if (!writeFiles) return token;
+
   upsertEnvVar(resolve(ROOT, ".env"), "APOUL_SERVICE_TOKEN", token);
 
   const rootEnv = loadEnvFile(resolve(ROOT, ".env"));
