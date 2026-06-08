@@ -19,4 +19,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
 EXPOSE 10000
 
 WORKDIR /app/apps/api
-CMD ["sh", "-c", "cd /app && pnpm db:generate && exec ./node_modules/.bin/tsx src/main.ts"]
+CMD ["sh", "-c", "cd /app && pnpm db:generate && cd apps/api && exec ./node_modules/.bin/tsx src/main.ts"]
