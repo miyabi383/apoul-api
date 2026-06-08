@@ -1,0 +1,36 @@
+# Render Blueprint — 無料枠向けシンプル版（API + Worker を 1 サービス）
+# Neon の DATABASE_URL を Blueprint 適用時に設定してください
+#
+# Dashboard: New → Blueprint → この repo → render-simple.yaml を選択
+
+services:
+  - type: web
+    name: apoul-api
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile.combined
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_DISABLED
+        value: "false"
+      - key: ALLOW_LOCAL_DISPATCH
+        value: "false"
+      - key: PORT
+        value: "4100"
+      - key: WORKER_POLL_MS
+        value: "2000"
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APOUL_SERVICE_TOKEN
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SEED_BILLING_MAPPING
+        value: "true"

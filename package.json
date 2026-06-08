@@ -12,6 +12,7 @@
     "issue-key": "pnpm --filter @apoul/db exec tsx --env-file=../../.env ../../scripts/issueDevKey.ts",
     "sync-dev-token": "tsx scripts/syncDevToken.ts",
     "prod:setup": "tsx scripts/prodSetup.ts",
+    "provision:prod": "tsx scripts/provisionProd.ts",
     "deploy": "bash scripts/deploy.sh",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",

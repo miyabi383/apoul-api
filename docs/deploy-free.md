@@ -2,6 +2,37 @@
 
 APOUL API SYSTEM を **0 円** で公開する構成です。
 
+## 最短ルート（推奨・約 5 分）
+
+フロントだけではログイン・ジョブ等は**一切動きません**。API + DB が必須です。
+
+### 事前準備（各 1 回）
+
+1. [Neon](https://console.neon.tech/app/settings/api-keys) で API キー作成
+2. [Render](https://dashboard.render.com/u/settings#api-keys) で API キー作成
+3. Render Dashboard → **Account Settings → GitHub** で `miyabi383/apoul-api` を連携
+
+### 一括セットアップ
+
+```bash
+NEON_API_KEY=neon_xxx RENDER_API_KEY=rnd_xxx pnpm provision:prod
+```
+
+このコマンドが自動で行うこと:
+
+| 順序 | 処理 |
+|------|------|
+| 1 | Neon に PostgreSQL 作成 |
+| 2 | ローカルから migrate + seed + トークン発行 |
+| 3 | Render に API + Worker（1 コンテナ）デプロイ |
+| 4 | Vercel 環境変数設定 + 再デプロイ |
+
+完了後: https://web-blond-nine-25.vercel.app/login でログイン可能。
+
+---
+
+## 構成（従来版: API / Worker 分割）
+
 | コンポーネント | サービス | 無料枠 |
 |----------------|----------|--------|
 | PostgreSQL | [Neon](https://neon.tech) | 0.5 GB / プロジェクト |
