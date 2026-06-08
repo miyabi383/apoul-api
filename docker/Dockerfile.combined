@@ -20,4 +20,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
 
 EXPOSE 10000
 
-CMD ["pnpm", "--filter", "@apoul/api", "start"]
+WORKDIR /app/apps/api
+CMD ["./node_modules/.bin/tsx", "src/main.ts"]
