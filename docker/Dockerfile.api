@@ -9,7 +9,7 @@ COPY apps/worker apps/worker
 COPY packages packages
 COPY scripts scripts
 
-RUN pnpm install --frozen-lockfile && pnpm db:generate
+RUN pnpm install --frozen-lockfile --prod=false && pnpm db:generate
 
 ENV NODE_ENV=production
 
@@ -18,4 +18,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
 
 EXPOSE 10000
 
-CMD ["pnpm", "exec", "tsx", "apps/api/src/main.ts"]
+CMD ["pnpm", "--filter", "@apoul/api", "exec", "tsx", "src/main.ts"]
