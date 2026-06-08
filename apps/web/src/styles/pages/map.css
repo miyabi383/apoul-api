@@ -1,0 +1,161 @@
+/* ── Sphere Map (全体マップ) ── */
+.map-page { height: 100%; display: flex; flex-direction: column; }
+.sphere-map { display: grid; grid-template-columns: 280px 1fr 300px; height: 100%; min-height: 560px; background: var(--bg); }
+.sphere-panel { border-right: 1px solid var(--border); background: var(--surface); padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.sphere-panel-head h2 { font-size: 16px; font-weight: 700; }
+.sphere-panel-head p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.sphere-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.sphere-stat { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+.sphere-stat span { display: block; font-size: 20px; font-weight: 700; color: var(--accent); }
+.sphere-stat label { font-size: 10px; color: var(--muted); }
+.sphere-section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+.sphere-route-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+.sphere-route-item { text-align: left; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; background: var(--bg); cursor: pointer; transition: border-color 0.15s; }
+.sphere-route-item:hover, .sphere-route-item.active { border-color: var(--accent); background: var(--accent-soft); }
+.sphere-route-flow { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.sphere-route-arrow { color: var(--muted); }
+.sphere-route-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.sphere-mapping-list { display: flex; flex-direction: column; gap: 4px; max-height: 120px; overflow-y: auto; }
+.sphere-id-row { font-size: 10px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
+.sphere-panel-actions { margin-top: auto; }
+
+.sphere-canvas-host { position: relative; min-width: 0; overflow: hidden; }
+.sphere-orbit-ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 68%; height: 68%;
+  transform: translate(-50%, -50%);
+  border: 1px dashed var(--border-strong);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.sphere-canvas { width: 100% !important; height: 100% !important; background: transparent !important; }
+
+.sphere-hub { position: relative; width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; }
+.sphere-hub-core {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+}
+.sphere-hub-label { margin-top: -4px; }
+.sphere-hub-title { font-size: 12px; font-weight: 800; color: var(--ink); font-family: var(--font-display); }
+.sphere-hub-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+.sphere-system--hue-0 .sphere-system-icon { background: var(--illus-sky-soft); color: var(--illus-sky); }
+.sphere-system--hue-1 .sphere-system-icon { background: var(--illus-mint-soft); color: var(--illus-mint); }
+.sphere-system--hue-2 .sphere-system-icon { background: var(--illus-coral-soft); color: var(--illus-coral); }
+.sphere-system--hue-3 .sphere-system-icon { background: var(--illus-sun-soft); color: #c48b00; }
+
+.sphere-canvas-deco {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, var(--illus-lavender-soft) 0%, transparent 55%),
+    radial-gradient(circle at 20% 30%, var(--illus-sky-soft) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, var(--illus-mint-soft) 0%, transparent 40%);
+  opacity: 0.45;
+}
+.sphere-detail-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* ── Visual stat cards ── */
+.visual-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.visual-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.visual-stat--sky { border-color: var(--illus-sky); background: linear-gradient(135deg, var(--surface) 60%, var(--illus-sky-soft)); }
+.visual-stat--mint { border-color: var(--illus-mint); background: linear-gradient(135deg, var(--surface) 60%, var(--illus-mint-soft)); }
+.visual-stat--coral { border-color: var(--illus-coral); background: linear-gradient(135deg, var(--surface) 60%, var(--illus-coral-soft)); }
+.visual-stat--sun { border-color: var(--illus-sun); background: linear-gradient(135deg, var(--surface) 60%, var(--illus-sun-soft)); }
+.visual-stat--lavender { border-color: var(--illus-lavender); background: linear-gradient(135deg, var(--surface) 60%, var(--illus-lavender-soft)); }
+.visual-stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.visual-stat-label { font-size: 11px; font-weight: 600; color: var(--muted); }
+
+.sphere-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.flow-node {
+  border-width: 2px;
+  box-shadow: var(--shadow-sm);
+}
+.flow-node-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: transparent !important;
+  display: flex; align-items: center; justify-content: center;
+}
+.flow-module-card {
+  border-width: 2px;
+  box-shadow: var(--shadow-sm);
+}
+.flow-module-icon {
+  border-radius: 14px;
+  border: 2px solid var(--border);
+}
+
+.sphere-system {
+  position: relative;
+  min-width: 140px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  display: flex; gap: 10px; align-items: center;
+}
+.sphere-hub-glow {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+  animation: sphere-pulse 3s ease-in-out infinite;
+}
+@keyframes sphere-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
+
+.sphere-system.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.sphere-system.disabled { opacity: 0.55; }
+.sphere-system-icon {
+  width: 36px; height: 36px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+  font-weight: 700; font-size: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.sphere-system-name { font-size: 12px; font-weight: 700; font-family: var(--font-display); }
+.sphere-system-code { font-size: 10px; font-family: var(--mono); color: var(--muted); }
+.sphere-system-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+.sphere-edge-label { font-size: 11px; fill: var(--text); font-weight: 600; }
+.sphere-edge-sub { font-size: 9px; fill: var(--muted); }
+
+.sphere-detail { border-left: 2px solid var(--border); background: var(--surface); padding: 16px; overflow-y: auto; }
+.sphere-detail h3 { font-size: 14px; font-weight: 800; font-family: var(--font-display); margin-bottom: 16px; }
+.sphere-detail-block { margin-bottom: 14px; }
+.sphere-detail-block label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+
+@media (max-width: 1100px) {
+  .sphere-map { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .sphere-panel { max-height: 220px; border-right: none; border-bottom: 1px solid var(--border); }
+  .sphere-detail { max-height: 240px; border-left: none; border-top: 1px solid var(--border); }
+}

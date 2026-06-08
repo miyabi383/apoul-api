@@ -1,0 +1,51 @@
+/* ── Login ── */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, var(--bg-dots) 1px, transparent 0);
+  background-size: 22px 22px;
+  position: relative;
+}
+.login-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 400px 300px at 15% 20%, var(--illus-lavender-soft), transparent 70%),
+    radial-gradient(ellipse 360px 260px at 85% 80%, var(--illus-mint-soft), transparent 70%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px 36px;
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 1;
+}
+.login-art { display: flex; justify-content: center; margin-bottom: 8px; }
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.login-brand .brand { font-size: 22px; }
+.login-brand .brand-sub { margin-top: 4px; }
+.login-card .field { margin-bottom: 18px; }
+.login-card .field input { width: 100%; }
+.login-card .btn { width: 100%; margin-top: 8px; padding: 12px; }
+.login-foot {
+  text-align: center;
+  margin-top: 20px;
+}
+

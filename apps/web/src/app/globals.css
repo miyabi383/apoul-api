@@ -1,0 +1,7 @@
+/* APOUL Admin — entry (Phase 4 split) */
+@import "../styles/tokens.css";
+@import "../styles/layout.css";
+@import "../styles/components.css";
+@import "../styles/pages/login.css";
+@import "../styles/pages/flows.css";
+@import "../styles/pages/map.css";

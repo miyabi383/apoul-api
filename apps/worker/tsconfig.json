@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@apoul/db": ["../../packages/db/src/index.ts"],
+      "@apoul/api/*": ["../api/src/*"]
+    }
+  },
+  "include": ["src/**/*", "../api/src/services/jobProcessor.ts", "../api/src/services/processJob.ts"]
+}

@@ -1,0 +1,81 @@
+# APOUL API SYSTEM — 4 サービス構成（開発向け）
+# 起動: docker compose up -d
+# ローカル PG を使う場合は postgres サービスを止めて .env の DATABASE_URL を合わせる
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: apoul-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: apoul
+    volumes:
+      - apoul_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: apoul-api
+    restart: unless-stopped
+    ports:
+      - "4100:4100"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/apoul?schema=public
+      PORT: "4100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "pnpm db:deploy && pnpm --filter @apoul/api dev"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: apoul-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      APOUL_API_URL: http://api:4100
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/apoul?schema=public
+    depends_on:
+      - api
+    command: sh -c "pnpm --filter @apoul/web dev"
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: apoul-worker
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/apoul?schema=public
+      WORKER_HEALTH_PORT: "4200"
+      WORKER_POLL_MS: "1000"
+      BILLING_BASE_URL: ${BILLING_BASE_URL:-http://host.docker.internal:4101/mock/billing}
+      ALLOW_LOCAL_DISPATCH: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "pnpm --filter @apoul/worker dev"
+
+volumes:
+  apoul_pg_data:

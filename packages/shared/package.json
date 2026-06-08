@@ -1,0 +1,19 @@
+{
+  "name": "@apoul/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./constants/scopes": "./src/constants/scopes.ts",
+    "./constants/jobs": "./src/constants/jobs.ts",
+    "./schemas/events": "./src/schemas/events.ts"
+  },
+  "dependencies": {
+    "zod": "^3.25.51"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc --noEmit -p tsconfig.json"
+  }
+}

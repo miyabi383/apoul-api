@@ -1,0 +1,53 @@
+# Render Blueprint — 無料枠（API + Worker）
+# DB は Neon 等の外部 PostgreSQL を DATABASE_URL に設定
+# 管理画面は Vercel（apps/web）を別途デプロイ
+#
+# デプロイ: Render Dashboard → New → Blueprint → この repo
+
+services:
+  - type: web
+    name: apoul-api
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile.api
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_DISABLED
+        value: "false"
+      - key: ALLOW_LOCAL_DISPATCH
+        value: "false"
+      - key: PORT
+        value: "4100"
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APOUL_SERVICE_TOKEN
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SEED_BILLING_MAPPING
+        value: "true"
+
+  - type: worker
+    name: apoul-worker
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile.worker
+    plan: free
+    region: singapore
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: WORKER_POLL_MS
+        value: "2000"
+      - key: ALLOW_LOCAL_DISPATCH
+        value: "false"
+      - key: BILLING_BASE_URL
+        sync: false

@@ -1,0 +1,34 @@
+{
+  "name": "apoul-api-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "api:dev": "pnpm --filter @apoul/api dev",
+    "web:dev": "pnpm --filter @apoul/web dev",
+    "worker:dev": "pnpm --filter @apoul/worker dev",
+    "seed": "pnpm --filter @apoul/db seed",
+    "issue-key": "pnpm --filter @apoul/db exec tsx --env-file=../../.env ../../scripts/issueDevKey.ts",
+    "sync-dev-token": "tsx scripts/syncDevToken.ts",
+    "prod:setup": "tsx scripts/prodSetup.ts",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "build": "turbo run build",
+    "db:generate": "pnpm --filter @apoul/db generate",
+    "db:migrate": "pnpm --filter @apoul/db migrate:dev",
+    "db:deploy": "pnpm --filter @apoul/db migrate:deploy",
+    "db:validate": "pnpm --filter @apoul/db validate",
+    "legacy:test": "pnpm --filter @apoul/api test",
+    "legacy:typecheck": "turbo run typecheck",
+    "legacy:build": "pnpm --filter @apoul/web build",
+    "test:e2e": "pnpm --filter @apoul/web test:e2e",
+    "openapi:generate": "tsx scripts/generateOpenApi.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsx": "^4.19.4",
+    "turbo": "^2.3.3",
+    "typescript": "^5.8.3"
+  }
+}

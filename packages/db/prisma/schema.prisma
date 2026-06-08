@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  owner
+  admin
+  viewer
+}
+
+enum SystemStatus {
+  active
+  disabled
+}
+
+enum ClientStatus {
+  active
+  revoked
+}
+
+enum JobStatus {
+  pending
+  processing
+  success
+  retrying
+  fail
+  dead
+}
+
+enum ProgressStatus {
+  not_started
+  in_progress
+  done
+  blocked
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement())
+  ref          String   @unique @db.VarChar(64)
+  email        String   @unique @db.VarChar(320)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         UserRole @default(viewer)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model System {
+  id        BigInt       @id @default(autoincrement())
+  ref       String       @unique @db.VarChar(64)
+  code      String       @unique @db.VarChar(64)
+  name      String       @db.VarChar(200)
+  baseUrl   String?      @map("base_url") @db.VarChar(500)
+  secretRef String?      @map("secret_ref") @db.VarChar(200)
+  status    SystemStatus @default(active)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  deletedAt DateTime?    @map("deleted_at")
+
+  apiClients    ApiClient[]
+  routesFrom    Route[]       @relation("RouteSource")
+  routesTo      Route[]       @relation("RouteTarget")
+  idMappings    IdMapping[]
+  inboundEvents InboundEvent[]
+
+  @@map("systems")
+}
+
+model ApiClient {
+  id          BigInt       @id @default(autoincrement())
+  ref         String       @unique @db.VarChar(64)
+  systemId    BigInt       @map("system_id")
+  name        String       @db.VarChar(200)
+  scopes      String[]
+  ipAllowlist String[]     @default([]) @map("ip_allowlist")
+  status      ClientStatus @default(active)
+  revokedAt   DateTime?    @map("revoked_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+
+  system  System   @relation(fields: [systemId], references: [id])
+  apiKeys ApiKey[]
+
+  @@index([systemId])
+  @@map("api_clients")
+}
+
+model ApiKey {
+  id         BigInt    @id @default(autoincrement())
+  ref        String    @unique @db.VarChar(64)
+  clientId   BigInt    @map("client_id")
+  keyHash    String    @map("key_hash") @db.VarChar(255)
+  keyPrefix  String    @map("key_prefix") @db.VarChar(32)
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  client ApiClient @relation(fields: [clientId], references: [id])
+
+  @@index([clientId])
+  @@index([keyPrefix])
+  @@map("api_keys")
+}
+
+model InboundEvent {
+  id             BigInt   @id @default(autoincrement())
+  ref            String   @unique @db.VarChar(64)
+  idempotencyKey String   @map("idempotency_key") @db.VarChar(256)
+  payloadHash    String   @map("payload_hash") @db.VarChar(64)
+  eventType      String   @map("event_type") @db.VarChar(128)
+  sourceSystemId BigInt   @map("source_system_id")
+  resourceType   String   @map("resource_type") @db.VarChar(64)
+  resourceId     String   @map("resource_id") @db.VarChar(128)
+  occurredAt     DateTime @map("occurred_at")
+  payload        Json
+  receivedAt     DateTime @default(now()) @map("received_at")
+
+  sourceSystem System @relation(fields: [sourceSystemId], references: [id])
+  jobs         Job[]
+
+  @@unique([idempotencyKey])
+  @@index([sourceSystemId, eventType])
+  @@map("inbound_events")
+}
+
+model Route {
+  id               BigInt   @id @default(autoincrement())
+  ref              String   @unique @db.VarChar(64)
+  sourceSystemId   BigInt   @map("source_system_id")
+  targetSystemId   BigInt   @map("target_system_id")
+  eventType        String   @map("event_type") @db.VarChar(128)
+  destinationPath  String   @map("destination_path") @db.VarChar(500)
+  destinationKeyTpl String  @map("destination_key_tpl") @db.VarChar(256)
+  enabled          Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  sourceSystem   System          @relation("RouteSource", fields: [sourceSystemId], references: [id])
+  targetSystem   System          @relation("RouteTarget", fields: [targetSystemId], references: [id])
+  transformRules TransformRule[]
+  jobs           Job[]
+
+  @@unique([sourceSystemId, eventType, targetSystemId])
+  @@map("routes")
+}
+
+model TransformRule {
+  id          BigInt   @id @default(autoincrement())
+  ref         String   @unique @db.VarChar(64)
+  routeId     BigInt   @map("route_id")
+  version     Int      @default(1)
+  inputSchema Json?    @map("input_schema")
+  mapping     Json
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  route Route @relation(fields: [routeId], references: [id])
+
+  @@index([routeId])
+  @@map("transform_rules")
+}
+
+model IdMapping {
+  id           BigInt   @id @default(autoincrement())
+  ref          String   @unique @db.VarChar(64)
+  systemId     BigInt   @map("system_id")
+  entityType   String   @map("entity_type") @db.VarChar(64)
+  localId      String   @map("local_id") @db.VarChar(128)
+  remoteSystem String   @map("remote_system") @db.VarChar(64)
+  remoteId     String   @map("remote_id") @db.VarChar(128)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  system System @relation(fields: [systemId], references: [id])
+
+  @@unique([systemId, entityType, localId, remoteSystem])
+  @@index([systemId, entityType, localId])
+  @@map("id_mappings")
+}
+
+model Job {
+  id              BigInt    @id @default(autoincrement())
+  ref             String    @unique @db.VarChar(64)
+  inboundEventId  BigInt    @map("inbound_event_id")
+  routeId         BigInt    @map("route_id")
+  status          JobStatus @default(pending)
+  destinationKey  String    @map("destination_key") @db.VarChar(256)
+  transformedBody Json?     @map("transformed_body")
+  lastErrorCode   String?   @map("last_error_code") @db.VarChar(64)
+  lastErrorMsg    String?   @map("last_error_msg") @db.Text
+  attemptCount    Int       @default(0) @map("attempt_count")
+  nextRetryAt     DateTime? @map("next_retry_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  inboundEvent InboundEvent @relation(fields: [inboundEventId], references: [id])
+  route        Route        @relation(fields: [routeId], references: [id])
+  attempts     JobAttempt[]
+
+  @@index([status, nextRetryAt])
+  @@index([inboundEventId])
+  @@map("jobs")
+}
+
+model JobAttempt {
+  id           BigInt   @id @default(autoincrement())
+  ref          String   @unique @db.VarChar(64)
+  jobId        BigInt   @map("job_id")
+  attemptNo    Int      @map("attempt_no")
+  status       JobStatus
+  requestBody  Json?    @map("request_body")
+  responseCode Int?     @map("response_code")
+  responseBody String?  @map("response_body") @db.Text
+  errorCode    String?  @map("error_code") @db.VarChar(64)
+  errorMsg     String?  @map("error_msg") @db.Text
+  durationMs   Int?     @map("duration_ms")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  job Job @relation(fields: [jobId], references: [id])
+
+  @@index([jobId])
+  @@map("job_attempts")
+}
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  ref        String   @unique @db.VarChar(64)
+  actorLabel String   @map("actor_label") @db.VarChar(200)
+  action     String   @db.VarChar(64)
+  targetType String   @map("target_type") @db.VarChar(64)
+  targetId   String   @map("target_id") @db.VarChar(128)
+  ip         String?  @db.VarChar(64)
+  reason     String?  @db.Text
+  meta       Json?
+  userId     BigInt?  @map("user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ProgressItem {
+  id          BigInt         @id @default(autoincrement())
+  ref         String         @unique @db.VarChar(64)
+  projectCode String         @map("project_code") @db.VarChar(64)
+  wbsCode     String         @map("wbs_code") @db.VarChar(64)
+  title       String         @db.VarChar(300)
+  status      ProgressStatus @default(not_started)
+  percent     Int            @default(0)
+  note        String?        @db.Text
+  sortOrder   Int            @default(0) @map("sort_order")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@unique([projectCode, wbsCode])
+  @@map("progress_items")
+}
+
+model HealthCheckTarget {
+  id        BigInt   @id @default(autoincrement())
+  ref       String   @unique @db.VarChar(64)
+  code      String   @unique @db.VarChar(64)
+  name      String   @db.VarChar(200)
+  url       String   @db.VarChar(500)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  runs HealthCheckRun[]
+
+  @@map("health_check_targets")
+}
+
+model HealthCheckRun {
+  id           BigInt   @id @default(autoincrement())
+  ref          String   @unique @db.VarChar(64)
+  targetId     BigInt   @map("target_id")
+  ok           Boolean
+  statusCode   Int?     @map("status_code")
+  latencyMs    Int?     @map("latency_ms")
+  errorMessage String?  @map("error_message") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  target HealthCheckTarget @relation(fields: [targetId], references: [id])
+
+  @@index([targetId, createdAt])
+  @@map("health_check_runs")
+}
+
+model OperationLog {
+  id        BigInt   @id @default(autoincrement())
+  ref       String   @unique @db.VarChar(64)
+  category  String   @db.VarChar(64)
+  level     String   @db.VarChar(16)
+  message   String   @db.Text
+  meta      Json?
+  requestId String?  @map("request_id") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([category, createdAt])
+  @@map("operation_logs")
+}
+
+model IdempotencyRecord {
+  id             BigInt   @id @default(autoincrement())
+  idempotencyKey String   @map("idempotency_key") @db.VarChar(256)
+  payloadHash    String   @map("payload_hash") @db.VarChar(64)
+  responseBody   Json     @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([idempotencyKey])
+  @@map("idempotency_records")
+}

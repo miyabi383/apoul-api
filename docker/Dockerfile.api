@@ -1,0 +1,22 @@
+# APOUL API — 本番（Render / Fly 等）
+FROM node:22-alpine
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json ./
+COPY apps/api apps/api
+COPY apps/worker apps/worker
+COPY packages packages
+COPY scripts scripts
+
+RUN pnpm install --frozen-lockfile && pnpm db:generate
+
+ENV NODE_ENV=production
+ENV PORT=4100
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4100)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+EXPOSE 4100
+
+CMD ["sh", "-c", "pnpm db:deploy && pnpm exec tsx apps/api/src/main.ts"]
